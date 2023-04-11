@@ -1,0 +1,155 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using tmps_cdmodels;
+
+// Singleton
+// Creez două instanțe ale clasei CarSingleton și verifică dacă ambele instanțe sunt aceleași
+Console.WriteLine("----- AFISAREA PARAMETRILOR MASINII APLICIND TREI MODELE CONDITIONALE -----");
+Console.WriteLine("----- Modelul Conditional Singleton -----");
+CarSingleton instance1 = CarSingleton.GetInstance();
+CarSingleton instance2 = CarSingleton.GetInstance();
+
+if (instance1 == instance2)
+{
+    Console.WriteLine("Singleton functioneaza, ambele instantee sunt aceleasi.");
+}
+else
+{
+    Console.WriteLine("Singleton nu functioneaza, instanele diferentiaza.");
+}
+
+// Builder
+// Construiesc un obiect complex, pas cu pas, prin intermediul unei clase separate, numită CarBuilder.
+Console.WriteLine("\n-----Modelul Conditional Builder -----");
+CarBuilder builder = new CarBuilder();
+CarDirector director = new CarDirector(builder);
+director.BuildSportsCar();
+Car car = builder.GetResult();
+Console.WriteLine(car);
+// Prototype
+// Creez creează două obiecte de tip Car prin clonarea unui obiect de referință existent.
+Console.WriteLine("\n-----Modelul Conditional Prototype -----");
+Car prototype = new Car("BMW", "X5", "Blue", 2020, 5);
+Car? clonedCar = prototype.Clone() as Car;
+Console.WriteLine(prototype);
+Console.WriteLine(clonedCar);
+
+Console.ReadKey();
+
+namespace tmps_cdmodels
+{
+
+    // Singleton
+    public sealed class CarSingleton
+    {
+        private static CarSingleton instance = null;
+        private static readonly object padlock = new object();
+
+        private CarSingleton()
+        {
+        }
+
+        public static CarSingleton GetInstance()
+        {
+            lock (padlock)
+            {
+                if (instance == null)
+                {
+                    instance = new CarSingleton();
+                }
+                return instance;
+            }
+        }
+    }
+
+    // Builder
+    public class CarBuilder
+    {
+        private string brand;
+        private string model;
+        private string color;
+        private int year;
+        private int seats;
+
+        public void SetBrand(string brand)
+        {
+            this.brand = brand;
+        }
+
+        public void SetModel(string model)
+        {
+            this.model = model;
+        }
+
+        public void SetColor(string color)
+        {
+            this.color = color;
+        }
+
+        public void SetYear(int year)
+        {
+            this.year = year;
+        }
+
+        public void SetSeats(int seats)
+        {
+            this.seats = seats;
+        }
+
+        public Car GetResult()
+        {
+            return new Car(brand, model, color, year, seats);
+        }
+    }
+
+    public class CarDirector
+    {
+        private CarBuilder builder;
+
+        public CarDirector(CarBuilder builder)
+        {
+            this.builder = builder;
+        }
+
+        public void BuildSportsCar()
+        {
+            builder.SetBrand("Ferrari");
+            builder.SetModel("488 GTB");
+            builder.SetColor("Red");
+            builder.SetYear(2021);
+            builder.SetSeats(2);
+        }
+    }
+
+    // Prototype
+    public class Car : ICloneable
+    {
+        public string Brand { get; set; }
+        public string Model { get; set; }
+        public string Color { get; set; }
+        public int Year { get; set; }
+        public int Seats { get; set; }
+
+        public Car(string brand, string model, string color, int year, int seats)
+        {
+            Brand = brand;
+            Model = model;
+            Color = color;
+            Year = year;
+            Seats = seats;
+        }
+
+        public override string ToString()
+        {
+            return $"{Brand} {Model}, {Color}, {Year}, {Seats} seats";
+        }
+
+        public object Clone()
+        {
+            return new Car(Brand, Model, Color, Year, Seats);
+        }
+    }
+}
