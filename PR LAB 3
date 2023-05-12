@@ -1,0 +1,77 @@
+using System;
+using System.Net;
+
+class Program
+{
+    static IPAddress dnsServer = IPAddress.Any; // serverul DNS implicit
+
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Aplicație de tip client DNS");
+        Console.WriteLine("Comenzi disponibile:");
+        Console.WriteLine("resolve <domain sau ip> - afiseaza lista de ip-uri asignate unui domeniu sau invers");
+        Console.WriteLine("use dns <ip> - schimbă serverul DNS utilizat pentru comenzile resolve");
+        Console.WriteLine("exit - închide aplicatia");
+
+        while (true)
+        {
+            Console.Write("Introduceti comanda: ");
+            string input = Console.ReadLine();
+            string[] command = input.Split(' ');
+
+            switch (command[0])
+            {
+                case "resolve":
+                    if (command.Length < 2)
+                    {
+                        Console.WriteLine("Comanda 'resolve' trebuie sa primeasca un domeniu sau o adresă IP ca argument.");
+                        break;
+                    }
+
+                    string argument = command[1];
+                    if (IPAddress.TryParse(argument, out IPAddress ip))
+                    {
+                        string[] hostnames = Dns.GetHostEntry(ip).HostName.Split('.');
+                        Console.WriteLine($"Domenii asignate adresei IP {ip}:");
+                        foreach (string hostname in hostnames)
+                        {
+                            Console.WriteLine(hostname);
+                        }
+                    }
+                    else
+                    {
+                        IPAddress[] addresses = Dns.GetHostAddresses(argument);
+                        Console.WriteLine($"Adrese IP asignate domeniului '{argument}':");
+                        foreach (IPAddress address in addresses)
+                        {
+                            Console.WriteLine(address.ToString());
+                        }
+                    }
+                    break;
+
+                case "use":
+                    if (command.Length < 2)
+                    {
+                        Console.WriteLine("Comanda 'use' trebuie sa primeasca o adresa IP ca argument.");
+                        break;
+                    }
+
+                    if (IPAddress.TryParse(command[1], out IPAddress newDnsServer))
+                    {
+                        dnsServer = newDnsServer;
+                        Console.WriteLine($"Serverul DNS a fost schimbat la {dnsServer}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Adresa IP introdusă nu este valida.");
+                    }
+                    break;
+
+                default:
+                    Console.WriteLine("Comanda introdusă nu este validă.");
+                    break;
+            }
+        }
+    }
+}
+
