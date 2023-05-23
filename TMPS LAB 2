@@ -1,0 +1,250 @@
+using System;
+using System.Collections.Generic;
+
+// Initializarea modelului Adaptor
+interface IAnimal
+{
+    void MakeSound();
+}
+
+class Dog : IAnimal
+{
+    public void MakeSound()
+    {
+        Console.WriteLine("INTERPRETAREA MODELELOR DE DESIGN STRUCTURATE");
+        Console.WriteLine("SUNETUL SPECIFIC AL ANIMALELOR:");
+        Console.WriteLine("Actiunea:Latra");
+    }
+}
+
+class Cat : IAnimal
+{
+    public void MakeSound()
+    {
+        Console.WriteLine("Actiunea:Miauna");
+    }
+}
+
+class DogAdapter : IAnimal
+{
+    private Dog dog;
+
+    public DogAdapter(Dog dog)
+    {
+        this.dog = dog;
+    }
+
+    public void MakeSound()
+    {
+        dog.MakeSound();
+    }
+}
+
+class CatAdapter : IAnimal
+{
+    private Cat cat;
+
+    public CatAdapter(Cat cat)
+    {
+        this.cat = cat;
+    }
+
+    public void MakeSound()
+    {
+        cat.MakeSound();
+    }
+}
+
+// Initializarea modelului Bridge 
+interface IMovement
+{
+    void Move();
+}
+
+class FlyMovement : IMovement
+{
+    public void Move()
+    {
+        Console.WriteLine("Actiunea:Zboara");
+    }
+}
+
+class WalkMovement : IMovement
+{
+    public void Move()
+    {
+        Console.WriteLine("Actiunea:Merge");
+    }
+}
+
+abstract class Animal
+{
+    protected IMovement movement;
+
+    public Animal(IMovement movement)
+    {
+        this.movement = movement;
+    }
+
+    public abstract void Display();
+}
+
+class Bird : Animal
+{
+    public Bird(IMovement movement) : base(movement)
+    {
+    }
+
+    public override void Display()
+    {
+        Console.WriteLine("Aceasta este o pasare:");
+        movement.Move();
+    }
+}
+
+class CatAnimal : Animal
+{
+    public CatAnimal(IMovement movement) : base(movement)
+    {
+    }
+
+    public override void Display()
+    {
+        Console.WriteLine("Aceasta este o pisica:");
+        movement.Move();
+    }
+}
+
+// Initializarea modelului Composite 
+interface IAnimalComponent
+{
+    void MakeSound();
+}
+
+class AnimalGroup : IAnimalComponent
+{
+    private List<IAnimalComponent> components = new List<IAnimalComponent>();
+
+    public void Add(IAnimalComponent component)
+    {
+        components.Add(component);
+    }
+
+    public void Remove(IAnimalComponent component)
+    {
+        components.Remove(component);
+    }
+
+    public void MakeSound()
+    {
+        foreach (var component in components)
+        {
+            component.MakeSound();
+        }
+    }
+}
+
+class DogComponent : IAnimalComponent
+{
+    public void MakeSound()
+    {
+        Console.WriteLine("Actiunea:Latra");
+    }
+}
+
+class CatComponent : IAnimalComponent
+{
+    public void MakeSound()
+    {
+        Console.WriteLine("Actiunea:Miauna");
+    }
+}
+
+// Initializarea modelului Decorator
+interface IAnimalSound
+{
+    void MakeSound();
+}
+
+class AnimalSound : IAnimalSound
+{
+    public virtual void MakeSound()
+    {
+        Console.WriteLine("Actiunea:Scoate sunet");
+    }
+}
+
+class LoudAnimalDecorator : IAnimalSound
+{
+    private IAnimalSound animalSound;
+
+    public LoudAnimalDecorator(IAnimalSound animalSound)
+    {
+        this.animalSound = animalSound;
+    }
+
+    public void MakeSound()
+    {
+        animalSound.MakeSound();
+        Console.WriteLine("Nivelul zgomotului:Tare");
+    }
+}
+
+// Initializarea modelului Proxy 
+class AnimalProxy : IAnimal, IAnimalSound
+{
+    private IAnimalSound animalSound;
+
+    public AnimalProxy(IAnimalSound animalSound)
+    {
+        this.animalSound = animalSound;
+    }
+
+    public void MakeSound()
+    {
+        animalSound.MakeSound();
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Initializarea modelului Adaptor 
+        Dog dog = new Dog();
+        DogAdapter dogAdapter = new DogAdapter(dog);
+        dogAdapter.MakeSound();
+
+        Cat cat = new Cat();
+        CatAdapter catAdapter = new CatAdapter(cat);
+        catAdapter.MakeSound();
+
+        // // Initializarea modelului Bridge 
+        IMovement flyMovement = new FlyMovement();
+        Animal birdWithFlyMovement = new Bird(flyMovement);
+        birdWithFlyMovement.Display();
+
+        IMovement walkMovement = new WalkMovement();
+        Animal catWithWalkMovement = new CatAnimal(walkMovement);
+        catWithWalkMovement.Display();
+
+        // Initializarea modelului Composite 
+        AnimalGroup animalGroup = new AnimalGroup();
+        animalGroup.Add(new DogComponent());
+        animalGroup.Add(new CatComponent());
+        animalGroup.MakeSound();
+
+        // Initializarea modelului Decorator 
+        IAnimalSound animalSound = new AnimalSound();
+        animalSound.MakeSound();
+
+        IAnimalSound loudAnimalSound = new LoudAnimalDecorator(new AnimalSound());
+        loudAnimalSound.MakeSound();
+
+        // Initializarea modelului Proxy 
+        IAnimalSound animalSoundProxy = new AnimalProxy(new AnimalSound());
+        animalSoundProxy.MakeSound();
+
+        Console.ReadLine();
+    }
+}
