@@ -1,0 +1,70 @@
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        UdpClient udpClient = new UdpClient();
+        udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, 1234)); // portul local 1234
+
+        IPAddress multicastAddress = IPAddress.Parse("239.0.0.222");
+        udpClient.JoinMulticastGroup(multicastAddress); // ne alăturăm grupului multicast
+
+        Thread receiveThread = new Thread(() =>
+        {
+            try
+            {
+                while (true)
+                {
+                    IPEndPoint remoteEndpoint = new IPEndPoint(IPAddress.Any, 0);
+                    byte[] receiveBytes = udpClient.Receive(ref remoteEndpoint); // așteptăm un mesaj
+
+                    string message = Encoding.ASCII.GetString(receiveBytes);
+                    Console.WriteLine($"[{remoteEndpoint}] {message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Eroare la primirea mesajelor: {ex.Message}");
+            }
+        });
+
+        receiveThread.Start(); // pornim firul de primire de mesaje
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("********************************UDP CHAT LET'S MEET********************************");
+        Console.ResetColor();
+        Console.WriteLine("Introduceti IP-ul destinatie sau scrieti 'all' pentru a trimite în canalul general: ");
+        string ip = Console.ReadLine();
+
+        while (true)
+        {
+            try
+            {
+                Console.Write("Introduceti un mesaj: ");
+                string message = Console.ReadLine();
+
+                if (ip == "all") // dacă vrem să trimitem în canalul general
+                {
+                    byte[] sendBytes = Encoding.ASCII.GetBytes(message);
+                    udpClient.Send(sendBytes, sendBytes.Length, new IPEndPoint(multicastAddress, 1234));
+                }
+                else // altfel trimitem către IP-ul specificat
+                {
+                    IPAddress destIpAddress = IPAddress.Parse(ip);
+                    byte[] sendBytes = Encoding.ASCII.GetBytes(message);
+                    udpClient.Send(sendBytes, sendBytes.Length, new IPEndPoint(destIpAddress, 1234));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Eroare la trimiterea mesajului: {ex.Message}");
+
+            }
+        }
+    }
+}
