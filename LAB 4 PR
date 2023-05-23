@@ -1,0 +1,108 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace OnlineStoreAPI
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+    }
+
+    public class CartItem
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    public class Cart
+    {
+        public List<CartItem> Items { get; set; } = new List<CartItem>();
+    }
+
+    public class Startup
+    {
+        // Lista de produse
+        private static List<Product> _products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Telefon 1", Price = 100 },
+            new Product { Id = 2, Name = "Telefon 2", Price = 200 },
+            new Product { Id = 3, Name = "Telefon 3", Price = 300 }
+        };
+
+        // Coșul de cumpărături
+        private static Cart _cart = new Cart();
+
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddRouting();
+        }
+
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                // Endpoint pentru obținerea listei de produse
+                endpoints.MapGet("/api/products", async context =>
+                {
+                    var json = JsonSerializer.Serialize(_products);
+                    await context.Response.WriteAsync(json);
+                });
+
+                // Endpoint pentru adăugarea unui produs în coșul de cumpărături
+                endpoints.MapPost("/api/cart", async context =>
+                {
+                    var payload = await JsonSerializer.DeserializeAsync<CartItem>(context.Request.Body);
+
+                    if (payload != null)
+                    {
+                        _cart.Items.Add(payload);
+                        await context.Response.WriteAsync("Produs adăugat în coș.");
+                    }
+                    else
+                    {
+                        await context.Response.WriteAsync("Eroare la adăugarea produsului în coș.");
+                    }
+                });
+
+                // Endpoint pentru obținerea conținutului coșului de cumpărături
+                endpoints.MapGet("/api/cart", async context =>
+                {
+                    var json = JsonSerializer.Serialize(_cart);
+                    await context.Response.WriteAsync(json);
+                });
+            });
+        }
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
+    }
+}
