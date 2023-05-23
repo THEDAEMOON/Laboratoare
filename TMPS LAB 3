@@ -1,0 +1,359 @@
+using System;
+using System.Collections.Generic;
+
+namespace DesignPatterns
+{
+    // Mediator
+    // Interfața Mediator definește metoda de trimitere a mesajelor către colegi
+    interface IMediator
+    {
+        void SendMessage(string message, Colleague colleague);
+    }
+
+    // Mediator concret
+    // Clasa Chatroom acționează ca mediator și gestionează comunicarea între colegi
+    class Chatroom : IMediator
+    {
+        private List<Colleague> colleagues = new List<Colleague>();
+
+        // Înregistrăm un coleg în chatroom
+        public void RegisterColleague(Colleague colleague)
+        {
+            colleagues.Add(colleague);
+        }
+
+        // Trimitem un mesaj către toți colegii, cu excepția expeditorului
+        public void SendMessage(string message, Colleague sender)
+        {
+            foreach (var colleague in colleagues)
+            {
+                if (colleague != sender)
+                    colleague.ReceiveMessage(message);
+            }
+        }
+    }
+
+    // Colleague
+    // Clasa abstractă Colleague definește comportamentul de bază al colegilor
+    abstract class Colleague
+    {
+        protected IMediator mediator;
+
+        public Colleague(IMediator mediator)
+        {
+            this.mediator = mediator;
+        }
+
+        // Metoda de trimitere a mesajelor către mediator
+        public virtual void SendMessage(string message)
+        {
+            mediator.SendMessage(message, this);
+        }
+
+        // Metoda abstractă de primire a mesajelor
+        public abstract void ReceiveMessage(string message);
+    }
+
+    // Colleague concret
+    // Clasa ChatParticipant reprezintă un coleg în chatroom
+    class ChatParticipant : Colleague
+    {
+        public string Name { get; }
+
+        public ChatParticipant(string name, IMediator mediator) : base(mediator)
+        {
+            Name = name;
+        }
+
+        // Implementăm metoda de primire a mesajelor
+        public override void ReceiveMessage(string message)
+        {
+            Console.WriteLine($"{Name} a primit mesajul: {message}");
+        }
+    }
+
+    // Observer
+    // Interfața Observer definește metoda de actualizare a observatorilor
+    interface IObserver
+    {
+        void Update(string data);
+    }
+
+    // Observer concret
+    // Clasa ConcreteObserver reprezintă un observator care primește actualizări de la un subiect
+    class ConcreteObserver : IObserver
+    {
+        private string name;
+
+        public ConcreteObserver(string name)
+        {
+            this.name = name;
+        }
+
+        // Implementăm metoda de actualizare
+        public void Update(string data)
+        {
+            Console.WriteLine($"{name} a primit datele: {data}");
+        }
+    }
+
+    // Subject
+    // Interfața Subject definește metodele pentru atașarea, detasarea și notificarea observatorilor
+    interface ISubject
+    {
+        void Attach(IObserver observer);
+        void Detach(IObserver observer);
+        void Notify(string data);
+    }
+
+    // Subject concret
+    // Clasa ConcreteSubject reprezintă un subiect care trimite actualizări observatorilor săi
+    class ConcreteSubject : ISubject
+    {
+        private List<IObserver> observers = new List<IObserver>();
+
+        // Atașăm un observator
+        public void Attach(IObserver observer)
+        {
+            observers.Add(observer);
+        }
+
+        // Detasăm un observator
+        public void Detach(IObserver observer)
+        {
+            observers.Remove(observer);
+        }
+
+        // Notificăm observatorii cu o actualizare
+        public void Notify(string data)
+        {
+            foreach (var observer in observers)
+            {
+                observer.Update(data);
+            }
+        }
+    }
+
+    // Strategy
+    // Interfața Strategy definește metoda comună pentru toate strategiile
+    interface IStrategy
+    {
+        void Execute();
+    }
+
+    // Strategy concret
+    // Clasa ConcreteStrategy1 reprezintă o implementare a unei strategii
+    class ConcreteStrategy1 : IStrategy
+    {
+        public void Execute()
+        {
+            Console.WriteLine("Execută strategia 1");
+        }
+    }
+
+    // Strategy concret
+    // Clasa ConcreteStrategy2 reprezintă o altă implementare a unei strategii
+    class ConcreteStrategy2 : IStrategy
+    {
+        public void Execute()
+        {
+            Console.WriteLine("Execută strategia 2");
+        }
+    }
+
+    // Template
+    // Clasa abstractă AbstractClass definește scheletul unei operațiuni cu metode în șablon
+    abstract class AbstractClass
+    {
+        // Metoda de șablon care definește pașii unei operațiuni
+        public void TemplateMethod()
+        {
+            Console.WriteLine("Incepe operatiunea");
+            Step1();
+            Step2();
+            Step3();
+            Console.WriteLine("Termina operatiunea");
+        }
+
+        // Metodele abstracte pe care clasele derivate trebuie să le implementeze
+        protected abstract void Step1();
+        protected abstract void Step2();
+        protected abstract void Step3();
+    }
+
+    // Template concret
+    // Clasa ConcreteClass implementează metodele abstracte ale clasei AbstractClass
+    class ConcreteClass : AbstractClass
+    {
+        protected override void Step1()
+        {
+            Console.WriteLine("Pasul 1:Scrie");
+        }
+
+        protected override void Step2()
+        {
+            Console.WriteLine("Pasul 2:Modifica");
+        }
+
+        protected override void Step3()
+        {
+            Console.WriteLine("Pasul 3:Sterge");
+        }
+    }
+
+    // Visitor
+    // Interfața Visitor definește metoda de vizitare a unui element
+    interface IVisitor
+    {
+        void Visit(Element element);
+    }
+
+    // Visitor concret
+    // Clasa ConcreteVisitor implementează metoda de vizitare
+    class ConcreteVisitor : IVisitor
+    {
+        public void Visit(Element element)
+        {
+            Console.WriteLine($"Vizitatorul a vizitat compartimentul {element.Name}");
+        }
+    }
+
+    // Element
+    // Clasa Element definește metoda de acceptare a unui vizitator
+    abstract class Element
+    {
+        public string Name { get; }
+
+        public Element(string name)
+        {
+            Name = name;
+        }
+
+        // Metoda abstractă de acceptare a vizitatorului
+        public abstract void Accept(IVisitor visitor);
+    }
+
+    // Element concret
+    // Clasa ConcreteElement reprezintă un element care poate fi vizitat
+    class ConcreteElement : Element
+    {
+        public ConcreteElement(string name) : base(name)
+        {
+        }
+
+        // Implementăm metoda de acceptare a vizitatorului
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Exemplu pentru Mediator
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Utilizarea modelului Mediator:");
+            Console.ResetColor();
+
+            // Creăm un mediator (chatroom)
+            Chatroom chatroom = new Chatroom();
+
+            // Creăm participanții la chat
+            ChatParticipant participant1 = new ChatParticipant("Participant 1", chatroom);
+            ChatParticipant participant2 = new ChatParticipant("Participant 2", chatroom);
+            ChatParticipant participant3 = new ChatParticipant("Participant 3", chatroom);
+
+            // Înregistrăm participanții în chatroom
+            chatroom.RegisterColleague(participant1);
+            chatroom.RegisterColleague(participant2);
+            chatroom.RegisterColleague(participant3);
+
+            // Participanții trimit mesaje prin intermediul chatroom-ului
+            participant1.SendMessage("Salut tuturor!");
+            participant2.SendMessage("Buna! Cum va mai merge?");
+            participant3.SendMessage("Foarte bine, multumesc!");
+
+            Console.WriteLine();
+
+            // Exemplu pentru Observer
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Utilizarea modelului Observer:");
+            Console.ResetColor();
+
+            // Creăm un subiect
+            ConcreteSubject subject = new ConcreteSubject();
+
+            // Creăm observatori
+            ConcreteObserver observer1 = new ConcreteObserver("Observer 1");
+            ConcreteObserver observer2 = new ConcreteObserver("Observer 2");
+
+            // Îl atașăm pe observer1 subiectului
+            subject.Attach(observer1);
+
+            // Notificăm observer1 cu o actualizare
+            subject.Notify("Date actualizate pentru observer1");
+
+            // Îl atașăm și pe observer2 subiectului
+            subject.Attach(observer2);
+
+            // Notificăm ambii observatori cu o actualizare
+            subject.Notify("Date actualizate pentru observer1 si observer2");
+
+            // Detasăm observer1 de la subiect
+            subject.Detach(observer1);
+
+            // Notificăm doar observer2 cu o actualizare
+            subject.Notify("Date actualizate doar pentru observer2");
+
+            Console.WriteLine();
+
+            // Exemplu pentru Strategy
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("Utilizarea modelului Strategy:");
+            Console.ResetColor();
+
+            // Creăm o instanță a unei strategii
+            IStrategy strategy1 = new ConcreteStrategy1();
+            IStrategy strategy2 = new ConcreteStrategy2();
+
+            // Executăm strategia 1
+            strategy1.Execute();
+
+            // Executăm strategia 2
+            strategy2.Execute();
+
+            Console.WriteLine();
+
+            // Exemplu pentru Template
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Utilizarea modelului Template:");
+            Console.ResetColor();
+
+            // Creăm o instanță a unei clase concrete
+            AbstractClass template = new ConcreteClass();
+
+            // Apelăm metoda de șablon
+            template.TemplateMethod();
+
+            Console.WriteLine();
+
+            // Exemplu pentru Visitor
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("Utilizarea mdelului Visitor:");
+            Console.ResetColor();
+
+            // Creăm un vizitator
+            IVisitor visitor = new ConcreteVisitor();
+
+            // Creăm un element
+            Element element = new ConcreteElement("**Vizitatori**");
+
+            // Acceptăm vizitatorul pe element
+            element.Accept(visitor);
+
+            Console.WriteLine();
+        }
+    }
+}
