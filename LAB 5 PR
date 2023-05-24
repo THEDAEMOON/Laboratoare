@@ -1,0 +1,182 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Net.Pop3;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+using MimeKit.Text;
+
+namespace EmailClient
+{
+    public class Program
+    {
+        private const string EmailAddress = "testareaUTM@gmail.com";
+        private const string Password = "test_354_UTM";
+
+        public static async Task Main(string[] args)
+        {
+            // Exemplu de utilizare:
+
+            // 1. Arată lista de email-uri din cutia poștală utilizând protocolul POP3
+            await ShowEmailsUsingPop3();
+
+            // 2. Arată lista de email-uri din cutia poștală utilizând protocolul IMAP
+            await ShowEmailsUsingImap();
+
+            // 3. Descarcă un email cu atașament
+            await DownloadEmailWithAttachment();
+
+            // 4. Trimite un email doar cu text
+            await SendEmailWithTextOnly();
+
+            // 5. Trimite un email cu atașament
+            await SendEmailWithAttachment();
+
+            // 6. Trimite un email indicând subiectul și detalii de reply-to
+            await SendEmailWithSubjectAndReplyTo();
+
+            Console.ReadLine();
+        }
+
+        public static async Task ShowEmailsUsingPop3()
+        {
+            using (var client = new Pop3Client())
+            {
+                await client.ConnectAsync("pop.gmail.com", 995, SecureSocketOptions.SslOnConnect);
+                await client.AuthenticateAsync(EmailAddress, Password);
+
+                for (int i = 0; i < client.Count; i++)
+                {
+                    var message = await client.GetMessageAsync(i);
+                    Console.WriteLine($"From: {message.From}");
+                    Console.WriteLine($"Subject: {message.Subject}");
+                    Console.WriteLine($"Date: {message.Date}");
+                    Console.WriteLine();
+                }
+
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        public static async Task ShowEmailsUsingImap()
+        {
+            using (var client = new ImapClient())
+            {
+                await client.ConnectAsync("imap.gmail.com", 993, SecureSocketOptions.SslOnConnect);
+                await client.AuthenticateAsync(EmailAddress, Password);
+
+                var inbox = client.Inbox;
+                await inbox.OpenAsync(FolderAccess.ReadOnly);
+
+                for (int i = 0; i < inbox.Count; i++)
+                {
+                    var message = await inbox.GetMessageAsync(i);
+                    Console.WriteLine($"From: {message.From}");
+                    Console.WriteLine($"Subject: {message.Subject}");
+                    Console.WriteLine($"Date: {message.Date}");
+                    Console.WriteLine();
+                }
+
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        public static async Task DownloadEmailWithAttachment()
+        {
+            using (var client = new Pop3Client())
+            {
+                await client.ConnectAsync("pop.gmail.com", 995, SecureSocketOptions.SslOnConnect);
+                await client.AuthenticateAsync(EmailAddress, Password);
+
+                var message = await client.GetMessageAsync(0);
+                foreach (var attachment in message.Attachments)
+                {
+                    var fileName = attachment.ContentDisposition?.FileName ?? "attachment.dat";
+                    using (var stream = File.Create(fileName))
+                    {
+                        if (attachment is MimePart mimePart)
+                        {
+                            await mimePart.Content.DecodeToAsync(stream);
+                        }
+                    }
+                }
+
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        public static async Task SendEmailWithTextOnly()
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Sender Name", EmailAddress));
+            message.To.Add(new MailboxAddress("Recipient Name", "recipient@example.com"));
+            message.Subject = "Email cu text";
+            message.Body = new TextPart(TextFormat.Plain)
+            {
+                Text = "Acesta este un email trimis doar cu text."
+            };
+
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(EmailAddress, Password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        public static async Task SendEmailWithAttachment()
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Sender Name", EmailAddress));
+            message.To.Add(new MailboxAddress("Recipient Name", "recipient@example.com"));
+            message.Subject = "Email cu atașament";
+
+            var bodyBuilder = new BodyBuilder();
+            bodyBuilder.TextBody = "Acesta este un email cu atașament.";
+
+            var attachment = new MimePart("image", "jpeg")
+            {
+                Content = new MimeContent(File.OpenRead("attachment.jpg")),
+                ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = Path.GetFileName("attachment.jpg")
+            };
+
+            bodyBuilder.Attachments.Add(attachment);
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(EmailAddress, Password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+        }
+
+        public static async Task SendEmailWithSubjectAndReplyTo()
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Sender Name", EmailAddress));
+            message.To.Add(new MailboxAddress("Recipient Name", "Adresa receptorului"));
+            message.Subject = "Email cu subiect și detalii de reply-to";
+            message.ReplyTo.Add(new MailboxAddress("Adresa receptorului"));
+            message.Body = new TextPart(TextFormat.Plain)
+            {
+                Text = "Acesta este un email cu subiect și detalii de reply-to."
+            };
+
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(EmailAddress, Password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+        }
+    }
+}
